@@ -161,12 +161,7 @@ public class EventRouterDelegate<R extends ConnectRecord<R>> {
 
         // Check to expand JSON string into real JSON.
         if (expandJsonPayload) {
-            if (!(payload instanceof String)) {
-                LOGGER.warn("Expand JSON payload is turned on but payload is not a string in {}", maybeRedactSensitiveData(r.key()));
-            }
-            else {
-                final String payloadString = (String) payload;
-
+            if (payload instanceof String payloadString) {
                 try {
                     // Parse and get Jackson JsonNode.
                     final JsonNode jsonPayload = parseJsonPayload(payloadString);
@@ -178,6 +173,11 @@ public class EventRouterDelegate<R extends ConnectRecord<R>> {
                     LOGGER.warn("JSON expansion failed", e);
                 }
             }
+            else if (payload != null) {
+                LOGGER.warn("Expand JSON payload is turned on but payload is not a string in {}", maybeRedactSensitiveData(r.key()));
+            }
+            // A null payload (for example, a NULL JSON column) is left untouched; it is handled
+            // below as a potential tombstone and must not produce a warning.
         }
 
         final Schema structValueSchema = onlyHeadersInOutputMessage ? null

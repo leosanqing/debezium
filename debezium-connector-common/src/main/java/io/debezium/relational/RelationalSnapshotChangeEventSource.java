@@ -200,6 +200,12 @@ public abstract class RelationalSnapshotChangeEventSource<P extends Partition, O
             else {
                 LOGGER.info("Snapshot step 7 - Skipping snapshotting of data");
                 releaseDataSnapshotLocks(ctx);
+                // debezium/dbz#1479: no data is snapshotted (e.g. snapshot.mode=no_data/schema_only), so mark every
+                // captured table as completed with zero rows; otherwise the RemainingTableCount metric would
+                // stay at the full captured-table count forever, since only the data snapshot drains it.
+                for (TableId tableId : ctx.capturedTables) {
+                    snapshotProgressListener.dataCollectionSnapshotCompleted(ctx.partition, tableId, 0);
+                }
                 ctx.offset.preSnapshotCompletion();
                 ctx.offset.postSnapshotCompletion();
             }
@@ -1114,8 +1120,10 @@ public abstract class RelationalSnapshotChangeEventSource<P extends Partition, O
 
     protected Long rowCountForTableChunked(TableId tableId) throws SQLException {
         // todo: snapshot select overrides?
+        // Use the quoted, fully-qualified identifier (as the rest of the snapshot SQL does) so that
+        // schema/table names requiring quoting - special characters, reserved words, etc. - remain valid.
         return jdbcConnection.queryAndMap(
-                "SELECT COUNT(1) FROM %s".formatted(jdbcConnection.getQualifiedTableName(tableId)),
+                "SELECT COUNT(1) FROM %s".formatted(jdbcConnection.quotedTableIdString(tableId)),
                 rs -> rs.next() ? rs.getLong(1) : 0L);
     }
 

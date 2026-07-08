@@ -652,7 +652,7 @@ public abstract class CommonConnectorConfig {
     public static final Field TOPIC_PREFIX = Field.create(ConfigurationNames.TOPIC_PREFIX_PROPERTY_NAME)
             .withDisplayName("Topic prefix")
             .withType(Type.STRING)
-            .withGroup(Field.createGroupEntry(Field.Group.CONNECTION))
+            .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR))
             .withWidth(Width.MEDIUM)
             .withImportance(Importance.HIGH)
             .withValidation(CommonConnectorConfig::validateTopicName)
@@ -929,7 +929,7 @@ public abstract class CommonConnectorConfig {
                     "This may not be ideal for larger tables, and using the multiplier, the formula is adjusted to increase the " +
                     "number of chunks by using 'row_count/(snapshot.max.threads * snapshot.max.threads.multiplier).");
 
-    public static final Field LEGACY_SNAPSHOT_MAX_THREADS = Field.createInternal("legacy.snapshot.max.threads")
+    public static final Field LEGACY_SNAPSHOT_MAX_THREADS = Field.create("legacy.snapshot.max.threads")
             .withDisplayName("Enforces using a single thread per table regardless of table size")
             .withType(Type.BOOLEAN)
             .withGroup(Field.createGroupEntry(Field.Group.CONNECTOR_SNAPSHOT))
@@ -938,7 +938,8 @@ public abstract class CommonConnectorConfig {
             .withDefault(false)
             .withDescription("When enabled, uses the legacy table-per-thread parallel snapshot algorithm. " +
                     "When set to false (the default), tables are split into chunks and processed across all snapshot threads, " +
-                    "allowing for higher concurrency for snapshots.");
+                    "allowing for higher concurrency for snapshots.")
+            .withDeprecatedAliases("internal.legacy.snapshot.max.threads");
 
     public static final Field SIGNAL_DATA_COLLECTION = Field.create("signal.data.collection")
             .withDisplayName("Signaling data collection")
@@ -1504,9 +1505,9 @@ public abstract class CommonConnectorConfig {
                     "By default collecting statistics is enabled.");
 
     protected static final ConfigDefinition CONFIG_DEFINITION = ConfigDefinition.editor()
-            .group(Field.Group.CONNECTION, TOPIC_PREFIX)
+            .group(Field.Group.CONNECTION)
             .group(Field.Group.CONNECTION_ADVANCED, SKIP_MESSAGES_WITHOUT_CHANGE)
-            .group(Field.Group.CONNECTOR, TOMBSTONES_ON_DELETE, BINARY_HANDLING_MODE, SCHEMA_NAME_ADJUSTMENT_MODE, FIELD_NAME_ADJUSTMENT_MODE,
+            .group(Field.Group.CONNECTOR, TOPIC_PREFIX, TOMBSTONES_ON_DELETE, BINARY_HANDLING_MODE, SCHEMA_NAME_ADJUSTMENT_MODE, FIELD_NAME_ADJUSTMENT_MODE,
                     EVENT_CONVERTING_FAILURE_HANDLING_MODE)
             .group(Field.Group.CONNECTOR_ADVANCED, PROVIDE_TRANSACTION_METADATA, CUSTOM_CONVERTERS, CUSTOM_POST_PROCESSORS,
                     INCREMENTAL_SNAPSHOT_CHUNK_SIZE, INCREMENTAL_SNAPSHOT_ALLOW_SCHEMA_CHANGES,
